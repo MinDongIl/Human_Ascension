@@ -77,14 +77,27 @@ class GitHubActivityMonitor:
 
 if __name__ == "__main__":
     # 여기에 아이디 넣기
-    TARGET_USER = "MinDongIl" 
+    TARGET_USER = "MinDongIl"
+    SERVER_URL = "http://localhost:8080/api/v1/monitor/commit-check"
     
     try:
         monitor = GitHubActivityMonitor(TARGET_USER)
         has_activity = monitor.check_today_push_event()
         
+        # Spring Boot 서버로 보고서 전송
+        payload = {
+            "username": TARGET_USER,
+            "hasActivity": has_activity
+        }
+        
+        response = requests.post(SERVER_URL, json=payload)
+        
+        if response.status_code in [200, 202]:
+            print(f"서버 보고 완료: {response.json().get('message')}")
+        else:
+            print(f"서버 보고 실패: {response.status_code}")
+
         if not has_activity:
-            # 커밋 없음: 종료 코드 1 반환 (추후 배치 작업에서 실패로 처리됨)
             sys.exit(1)
             
     except Exception as e:
